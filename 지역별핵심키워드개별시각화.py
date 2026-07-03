@@ -65,25 +65,31 @@ df_exploded = df_region[["상세지역", "정제된_리스트"]].explode("정제
 df_exploded.columns = ["상세지역", "키워드"]
 df_exploded = df_exploded.dropna()
 
+
 df_word_counts = (
     df_exploded.groupby(["상세지역", "키워드"])
     .size()
+    # .size() 메서드를 통해 상세지역별 중복 키워드 중 중복되는 것들을 groupby로 전부 묶은 뒤, 상세지역과 키워드를 index로 하여 수를 새어 결과를 만들고, 결과물은 시리즈가 됨. 이후 아래에서 reset-index를 통해 index를 다시 숫자화시키고, name="뉴스건수"를 통해 새로운 컬럼명을 만듬
     .reset_index(name="뉴스건수")
 )
 
 # 5. 순위 매기기 및 상위 3개 추출
 df_word_counts["순위"] = (
     df_word_counts.groupby("상세지역")["뉴스건수"]
+    #groupby() 의 ()안에 들어가는 칼럼명은 그 칼럼명을 기준으로 메서드가 기능하도록 한다는 의미, 여기서는 상세지역을 기준으로 각 키워드의 뉴스건수가 가장 많은 순으로 재졍렬하겠다는 의미
     .rank(method="first", ascending=False)
+    # ascending=False 는 내림차순한다는뜻
     .astype(int)
 )
 visual_df = df_word_counts[df_word_counts["순위"] <= 3].copy()
+
 
 # 6. [정렬] 상위 3개 키워드 총합이 많은 상세지역 순서 정의
 region_order = (
     visual_df.groupby("상세지역")["뉴스건수"]
     .sum()
     .sort_values(ascending=False)
+    # 각 상세지역의 뉴스건수 3위까지를 합하고, 그 값이 높은 순서대로 상세지역을 내림차순 정렬하라는 의미
     .index
 )
 
@@ -198,9 +204,10 @@ plt.tight_layout()
 plt.savefig('chart.png', bbox_inches='tight')
 
 # plt.show()
+# 시각화 하고 작업을 끝내버릴 수 있기 때문에, html 코드 아래로 내리거나, 주석처리해야됨
 
 # --- 3. [핵심] 이미지를 포함한 index.html 파일 생성하기 ---
-html_content = """
+html_content = '''
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -230,7 +237,7 @@ html_content = """
         </div>
 </body>
 </html>
-"""
+'''
 
 
 # 작성된 내용을 index.html 파일로 저장합니다.
